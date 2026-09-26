@@ -11,6 +11,21 @@ if (
 
 require_once "db.php";
 
+// Handle delete request
+if ($_SERVER["REQUEST_METHOD"] === "POST" && isset($_POST["delete_id"])) {
+    $delete_id = (int) $_POST["delete_id"];
+
+    $statement = $pdo->prepare("
+        DELETE FROM residents
+        WHERE id = ?
+    ");
+
+    $statement->execute([$delete_id]);
+
+    header("Location: reports.php");
+    exit;
+}
+
 $total_residents = $pdo->query("
     SELECT COUNT(*)
     FROM residents
@@ -30,6 +45,7 @@ $not_received_count = $pdo->query("
 
 $statement = $pdo->query("
     SELECT
+        id,
         full_name,
         age,
         category,
@@ -145,13 +161,14 @@ $residents = $statement->fetchAll();
                                 <th>Assistance Needed</th>
                                 <th>Status</th>
                                 <th>Date Received</th>
+                                <th>Action</th>
                             </tr>
                         </thead>
 
                         <tbody>
                             <?php if (empty($residents)): ?>
                                 <tr>
-                                    <td colspan="7">
+                                    <td colspan="8">
                                         No resident records found.
                                     </td>
                                 </tr>
@@ -221,6 +238,27 @@ $residents = $statement->fetchAll();
                                                 ENT_QUOTES,
                                                 "UTF-8"
                                             ); ?>
+                                        </td>
+
+                                        <td class="no-print">
+                                            <form
+                                                method="POST"
+                                                onsubmit="return confirm('Delete this resident?');"
+                                                style="display:inline;"
+                                            >
+                                                <input
+                                                    type="hidden"
+                                                    name="delete_id"
+                                                    value="<?= (int) $resident['id']; ?>"
+                                                >
+
+                                                <button
+                                                    type="submit"
+                                                    class="delete-button"
+                                                >
+                                                    Delete
+                                                </button>
+                                            </form>
                                         </td>
                                     </tr>
                                 <?php endforeach; ?>
